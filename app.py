@@ -321,6 +321,37 @@ def pagar_admin(codigo): #caixa
         return redirect(url_for('administracao'))
     return render_template('pagar_admin.html', comanda=comanda, subtotal=subtotal, erro=erro)
 
+@app.route('/admin/adicionar_item_cardapio', methods=['POST']) #add item pra adm
+@login_required
+def adicionar_item_cardapio():
+    if not usuario_tem_perfil('Administrador'):
+        return redirect(url_for('index'))
+
+    nome = request.form.get('nome')
+    preco = float(request.form.get('preco'))
+    disponivel = request.form.get('disponivel') == 'on'  
+
+    if nome and preco >= 0:
+        item = ItemCardapio(nome=nome, preco=preco, disponivel=disponivel)
+        db.session.add(item)
+        db.session.commit()
+
+    return redirect(url_for('administracao'))
+
+@app.route('/admin/remover_item_cardapio/<int:item_id>', methods=['POST']) #remove item
+@login_required
+def remover_item_cardapio(item_id):
+    if not usuario_tem_perfil('Administrador'):
+        return redirect(url_for('index'))
+
+    item = ItemCardapio.query.get(item_id)
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+
+    return redirect(url_for('administracao'))
+
+
 if __name__ == '__main__': #roda o flask server la
     with app.app_context():
         db.create_all()

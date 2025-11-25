@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<h2>Administração</h2>
+
+<h3>Usuários</h3>
+<form method="post" action="{{ url_for('criar_usuario') }}">
+  <input name="login" placeholder="login" required>
+  <input name="senha" placeholder="senha" required>
+  <select name="perfil_id">
+    <option value="1">Cliente</option>
+    <option value="2">Atendente</option>
+    <option value="3">Administrador</option>
+  </select>
+  <button type="submit">Criar usuário</button>
+</form>
+<ul>
+  {% for u in usuarios %}
+    <li>
+      {{ u.login }} ({{ u.perfil.nome }})
+      <form method="post" action="{{ url_for('deletar_usuario', usuario_id=u.id) }}" style="display:inline">
+        <button type="submit">Deletar</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+
+<h3>Lista de comandas</h3>
+<ul style="list-style:none; padding:0;">
+  {% for com in comandas %}
+    <li style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #ccc;">
+      <strong>Comanda {{ com.codigo }}</strong> - {{ com.estado }} - Cliente: {{ com.cliente_id }}<br>
+      <a href="{{ url_for('ver_comanda', codigo=com.codigo) }}">Ver</a>
+      {% if com.estado == 'paga' %}
+        | <a href="{{ url_for('recibo', codigo=com.codigo) }}">Ver Recibo</a>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+
+<h3>Pagamentos pendentes</h3>
+<ul>
+  {% for p in pagamentos %}
+    <li>
+      Pagamento {{ p.id }} - Comanda {{ p.comanda_id }} - Cliente: {{ usuarios_map.get(p.usuario_id, p.usuario_id) }} - Valor: R$ {{ '%.2f'|format(p.valor_recebido) }} - Troco: R$ {{ '%.2f'|format(p.troco) }}
+      <form method="post" action="{{ url_for('confirmar_pagamento', pagamento_id=p.id) }}" style="display:inline">
+        <button type="submit">Confirmar pagamento</button>
+      </form>
+      {% set com = comandas|selectattr("id","equalto",p.comanda_id)|first %}
+      <a href="{{ url_for('ver_comanda', codigo=com.codigo if com else 0) }}">Ver comanda</a>
+    </li>
+  {% endfor %}
+</ul>
+
+
+<h3>Cardápio</h3>
+<form method="post" action="{{ url_for('adicionar_item_cardapio') }}">
+  <input name="nome" placeholder="Nome do item" required>
+  <input type="number" step="0.01" name="preco" placeholder="Preço" required>
+  <label>
+    Disponível <input type="checkbox" name="disponivel" checked>
+  </label>
+  <button type="submit">Adicionar Item</button>
+</form>
+
+<ul>
+  {% for item in itens %}
+    <li>
+      {{ item.nome }} - R$ {{ '%.2f'|format(item.preco) }}
+      <form method="post" action="{{ url_for('remover_item_cardapio', item_id=item.id) }}" style="display:inline">
+        <button type="submit">Remover</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+
+{% endblock %}
